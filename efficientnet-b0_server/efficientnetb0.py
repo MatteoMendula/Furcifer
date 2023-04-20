@@ -6,13 +6,16 @@ from PIL import Image
 import json
 from socketserver import ThreadingMixIn
 import torch
+import requests
 
 from vision_simple_nano import efficient_net_inference
 from efficientnet_pytorch import EfficientNet
 
-# model = EfficientNet.from_pretrained('efficientnet-b0')
-# model.cuda()
-# torch.cuda.synchronize()
+model = EfficientNet.from_pretrained('efficientnet-b0')
+model.cuda()
+torch.cuda.synchronize()
+
+# model = 'efficientnet-b0'
 
 class HTTP_handler(SimpleHTTPRequestHandler):
 
@@ -44,7 +47,15 @@ class HTTP_handler(SimpleHTTPRequestHandler):
 
             # Classify
             # inference_result = efficient_net_inference(img_pil=img_pil, model=model)
-            inference_result = efficient_net_inference(img_pil=img_pil, model='efficientnet-b0')
+            inference_result = "not implemented yet"
+
+            try:
+                inference_result = efficient_net_inference(img_pil=img_pil, model=model)
+            except Exception as e:
+                print("Error: ", e)
+                inference_result = "Error: " + str(e)
+
+            # inference_result = efficient_net_inference(img_pil=img_pil, model='efficientnet-b0')
 
             response = {
                 'message': 'Message received. size={} bytes'.format(content_length),

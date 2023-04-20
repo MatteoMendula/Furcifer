@@ -5,6 +5,7 @@ from PIL import Image
 import json
 from threading import Thread
 import time
+
 class User():
     def __init__(self,number_request,type_conenction, set_tasks, req_per_sec) :
         self.number_request=number_request
@@ -12,7 +13,7 @@ class User():
         self.set_tasks=set_tasks
         self.req_per_sec=req_per_sec
     def send_async(self,url, json_data, headers, results):
-        response = requests.post(url, data=json_data, headers=headers)
+        response = requests.post(url, data=json_data, headers=headers, timeout=10)
         results.append(response.text)
     def start(self):
         while(True):
@@ -36,6 +37,7 @@ class User():
             }
             json_data = json.dumps(data)
             def send_req_per_second():
+                start_time = time.time()
                 threads = [None] * self.req_per_sec
                 results = []
                 for i in range(len(threads)):
@@ -44,12 +46,17 @@ class User():
                 for i in range(len(threads)):
                     threads[i].join()
                 # print(" ".join(results))
+                end_time = time.time()
+                time_in_ms = (end_time - start_time) * 1000
+                print("Time interval in milliseconds:", time_in_ms)
+
                 print(len(results))
+
                 time.sleep(1)
                 send_req_per_second()
             send_req_per_second()
 if __name__ == "__main__":
-    user_1=User(10, 'BAD',set(), 50)
+    user_1=User(10, 'BAD',set(), 5)
     user_1.start()
 
 
