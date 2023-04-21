@@ -7,7 +7,7 @@ from threading import Thread
 import time
 
 class User():
-    def __init__(self,number_request,type_conenction, set_tasks, req_per_sec) :
+    def __init__(self,number_request,type_conenction, set_tasks, req_per_sec, port) :
         self.number_request=number_request
         self.type_connection=type_conenction
         self.set_tasks=set_tasks
@@ -28,7 +28,7 @@ class User():
             img_base64 = base64.b64encode(img_data).decode('utf-8')
             # Make a POST request with the base64-encoded image string as the request body
             #url = "http://172.24.140.180:8000/img_object_classification"
-            url = "http://localhost:8000/img_object_classification"
+            url = "http://localhost:{}/img_object_classification".format(port)
             # headers = {"Content-type": "text/plain"}
             headers = {"Content-type": "application/json"}
             data = {
@@ -45,7 +45,7 @@ class User():
                     threads[i].start()
                 for i in range(len(threads)):
                     threads[i].join()
-                # print(" ".join(results))
+                print(" ".join(results))
                 end_time = time.time()
                 time_in_ms = (end_time - start_time) * 1000
                 print("Time interval in milliseconds:", time_in_ms)
@@ -56,7 +56,13 @@ class User():
                 send_req_per_second()
             send_req_per_second()
 if __name__ == "__main__":
-    user_1=User(10, 'BAD',set(), 5)
+    from sys import argv
+    n_requests = 5
+    port = 8000
+    if len(argv) >= 2:
+        port=int(argv[1])
+        n_requests=int(argv[2])
+    user_1=User(10, 'BAD',set(), n_requests,port)
     user_1.start()
 
 
