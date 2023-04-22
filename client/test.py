@@ -28,7 +28,7 @@ class User():
             img_base64 = base64.b64encode(img_data).decode('utf-8')
             # Make a POST request with the base64-encoded image string as the request body
             #url = "http://172.24.140.180:8000/img_object_classification"
-            url = "http://localhost:{}/img_object_classification".format(port)
+            url = "http://localhost:{}/furcifer_efficientnet_b0".format(port)
             # headers = {"Content-type": "text/plain"}
             headers = {"Content-type": "application/json"}
             data = {

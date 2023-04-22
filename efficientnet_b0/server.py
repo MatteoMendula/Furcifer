@@ -14,11 +14,11 @@ torch.cuda.synchronize()
 
 app = Flask(__name__)
 
-@app.route("/")
+@app.route("/furcifer_efficientnet_b0")
 def hello():
     return "Hello, World!"
 
-@app.route("/img_object_classification", methods=["POST"])
+@app.route("/furcifer_efficientnet_b0", methods=["POST"])
 def handle_post_request():
     data = request.get_json()
     img_base64 = data['image']

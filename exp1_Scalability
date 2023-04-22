@@ -1,0 +1,7 @@
+sudo docker-compose up
+
+
+python test.py 8000 60
+sudo docker-compose scale furcifer_efficientnet_b0=2
+
+sudo docker-compose down
