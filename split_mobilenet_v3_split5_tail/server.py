@@ -27,7 +27,7 @@ app = Flask(__name__)
 
 @app.route("/furcifer_split_mobilenet_v3_split5_tail")
 def hello():
-    return "Hello, World! - head"
+    return "Hello, World! - tail"
 
 @app.route("/furcifer_split_mobilenet_v3_split5_tail", methods=["POST"])
 def handle_post_request():
