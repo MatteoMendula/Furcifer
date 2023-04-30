@@ -1,0 +1,3 @@
+[submodule "client/Energon_Prometheus_exporter"]
+	path = client/Energon_Prometheus_exporter
+	url = https://github.com/MatteoMendula/Energon_Prometheus_exporter.git
