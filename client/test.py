@@ -5,8 +5,13 @@ from PIL import Image
 import json
 from threading import Thread
 import time
+import sys
 
-import EnergonPrometheusExporter
+from Energon_Prometheus_exporter import utils
+
+sys.path.append("/home/sharon/Documents/Research/Ubicomp_Experiments/Furcifer/client/Energon_Prometheus_exporter")
+import Energon_Prometheus_exporter
+from Energon_Prometheus_exporter.prometheus_exporter import EnergonPrometheusExporter
 
 global latency
 global switch
@@ -130,6 +135,7 @@ class Logger(threading.Thread):
 def export_loop(exporter):
     global switch
     global latency
+    exporter.start_server()
 
     prev_lat = 0
     delta = 0
@@ -153,9 +159,9 @@ def export_loop(exporter):
         time.sleep(0.05)
 
 if __name__ == "__main__":
-    global switch
-    global latency
-    
+    #global switch
+    #global latency
+        
     switch = False
     latency = 0
     
@@ -197,7 +203,7 @@ if __name__ == "__main__":
         start_time_user=time.time()
         user_1=User(10, 'BAD',set(), n_requests, ip, port, route, start_time_user, duration_user, log_metrics)
         user_1.start()
-
+    
         print("Getting the metrics ")
         results_metrics=log_metrics.get_metrics(start_time_user,start_time_user+duration_user)
 
@@ -215,7 +221,8 @@ if __name__ == "__main__":
         avg_var_metrics[j]={'avg':temp_dict_avg, 'var':temp_dict_var}
         print(avg_var_metrics)
         
-        log_metrics = user_l.logger
+        log_metrics = user_1.logger
+        
         del user_1
         n_requests+=1
 
