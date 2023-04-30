@@ -26,7 +26,6 @@ def handle_post_request():
     img_bytes = BytesIO(img_data)
     img_pil = Image.open(img_bytes)
 
-    inference_result = "not implemented yet"
     try:
         inference_result = efficient_net_inference(img_pil=img_pil, model=model)
     except Exception as e:
