@@ -11,7 +11,9 @@ import json
 from inference import mobilenetv3_split_5_head_inference
 from mobilenetv3 import mobilenetv3
 
-os.environ['TAIL_SERVER_URL'] = 'localhost:8001/furcifer_split_mobilenet_v3_split5_tail'
+if os.environ.get('TAIL_SERVER_URL') is None:
+    os.environ['TAIL_SERVER_URL'] = 'localhost:8001/furcifer_split_mobilenet_v3_split5_tail'
+
 TAIL_SERVER_URL = os.getenv('TAIL_SERVER_URL')
 
 split_position=5
@@ -40,31 +42,35 @@ def handle_post_request():
     img_pil = Image.open(img_bytes)
     image_unqueezed = transform(img_pil).unsqueeze(0)
 
-    payload = {}
-    payload["error"] = False
+    head_payload = {}
+    head_payload["error"] = False
 
     try:
-        payload["head_inference_result"] = mobilenetv3_split_5_head_inference(image_unqueezed=image_unqueezed, model=model_head)
+        inference = mobilenetv3_split_5_head_inference(image_unqueezed=image_unqueezed, model=model_head)
+        head_payload["head_inference_result"] = inference["head_inference_result"]
+        head_payload['head_inference_time'] = inference['head_inference_time']
     except Exception as e:
         print("Error: ", e)
-        payload["error"] = True
-        payload["head_inference_result"] = "Error: " + str(e)
+        head_payload["error"] = True
+        head_payload["head_inference_result"] = "Error: " + str(e)
 
     # If there was an error, interrupt the request and return the error message
-    if payload["error"]:
-        return jsonify(payload)
+    if head_payload["error"]:
+        return jsonify(head_payload)
 
     # Send the inference result to the tail server
     headers = {'Content-Type': 'application/json'}
-    response = requests.post(TAIL_SERVER_URL, headers=headers, data=payload)
+    tail_response = requests.post(TAIL_SERVER_URL, headers=headers, data=head_payload['head_inference_result'])
 
-    # Parse the response content to a JSON object
-    data = json.loads(response.content)
+    # Parse the tail_response content to a JSON object
+    tail_payload = json.loads(tail_response.content) 
 
     # Create a new response object
     response = {}
-    response["error"] = data["error"]
-    response["inference_result"] = data["tail_inference_result"]
+    response["error"] = tail_payload["error"]
+    response['head_inference_time'] = head_payload['head_inference_time']
+    response['tail_inference_time'] = tail_payload['tail_inference_time']
+    response["inference_result"] = tail_payload["tail_inference_result"]
     
     return jsonify(response)
 

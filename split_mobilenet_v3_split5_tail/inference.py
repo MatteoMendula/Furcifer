@@ -1,6 +1,11 @@
 import torch
+import time
 
 def mobilenetv3_split_5_tail_inference(head_inference_result, model):
+    result = {}
+
+    start = time.time()
+    model.eval()
     output_head = model(head_inference_result)
 
     classes_probabilies = {}
@@ -9,5 +14,9 @@ def mobilenetv3_split_5_tail_inference(head_inference_result, model):
         prob = torch.softmax(output_head, dim=1)[0, idx].item()
         classes_probabilies[idx] = prob*100
 
+    end = time.time()
 
-    return classes_probabilies
+    result['tail_inference_result'] = classes_probabilies
+    result['tail_inference_time'] = end - start
+
+    return result
