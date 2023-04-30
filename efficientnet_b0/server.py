@@ -3,7 +3,6 @@ from io import BytesIO
 import base64
 from PIL import Image
 import torch
-import requests
 
 from vision_simple_nano import efficient_net_inference
 from efficientnet_pytorch import EfficientNet

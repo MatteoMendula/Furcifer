@@ -3,10 +3,8 @@ from io import BytesIO
 import base64
 from PIL import Image
 import torch
-import requests
 import torchvision.transforms as transforms
 import os
-import json
 
 from inference import mobilenetv3_split_5_tail_inference
 from mobilenetv3 import mobilenetv3
