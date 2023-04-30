@@ -14,9 +14,16 @@ class User():
         self.req_per_sec=req_per_sec
         self.start_time=start_time
         self.duration=duration
+        self.latencies=[]
+
     def send_async(self,url, json_data, headers, results):
         response = requests.post(url, data=json_data, headers=headers, timeout=10)
         results.append(response.text)
+
+    def get_latencies(self):
+        print(self.latencies)
+        return self.latencies
+    
     def start(self):
         while(time.time() < self.start_time+self.duration):
             # Open the image file
@@ -50,19 +57,22 @@ class User():
                 print(" ".join(results))
                 end_time = time.time()
                 time_in_ms = (end_time - start_time) * 1000
+                self.latencies.append(time_in_ms)
                 print("Time interval in milliseconds:", time_in_ms)
 
                 print(len(results))
                 if (time.time() < self.start_time+self.duration):
                     time.sleep(1)
-                    send_req_per_second()   
-            send_req_per_second()
+                    send_req_per_second()  
+                return self.latencies 
+            
+            self.latencies=send_req_per_second()
 
 import json
 from urllib.request import urlopen
 import time
 import threading
-import statistics
+import numpy as np
 
 
 class Logger(threading.Thread):
@@ -106,20 +116,20 @@ class Logger(threading.Thread):
 
 if __name__ == "__main__":
     from sys import argv
-    n_requests = 5
     port = 8000
     duration=10
 
     #Starting logger code
     metrics=['energon_cpu_in_power_mW','energon_gpu_in_power_mW','energon_cpu_total_usage_percentage',
-        'energon_gpu_total_usage_percentage','energon_ram_total_bytes','energon_ram_percent_used_percentage']
+        'energon_gpu_total_usage_percentage','energon_ram_percent_used_percentage','energon_ram_percent_used_percentage']
     url='http://localhost:9090/api/v1/query?query='
 
     start_time_user=time.time()
     duration_user=10
+    num_tests=10
 
     start_time_metrics=time.time()
-    duration_metrics=duration_user+3
+    duration_metrics=(duration_user*num_tests)+3
     log_metrics=Logger(time.time(),duration_metrics,url,metrics)
     log_metrics.setDaemon(True)
     log_metrics.start()
@@ -128,16 +138,34 @@ if __name__ == "__main__":
         port=int(argv[1])
         n_requests=int(argv[2])
     
-    user_1=User(10, 'BAD',set(), n_requests,port, start_time_user, duration_user)
-    user_1.start()
+    avg_var_metrics={}
+    n_requests = 1
+    for j in range(num_tests):
+        print("Testing "+ str(n_requests) + " requests per second")
+        start_time_user=time.time()
+        user_1=User(10, 'BAD',set(), n_requests,port, start_time_user, duration_user)
+        user_1.start()
 
-    results_metrics=log_metrics.get_metrics(start_time_user,start_time_user+duration_user)
+        
+        print("Getting the metrics ")
+        results_metrics=log_metrics.get_metrics(start_time_user,start_time_user+duration_user)
 
-    for i in range(len(metrics)):
-        #print(results_metrics[metrics[i]])
-        print("Average of " +metrics[i]+" :", sum(results_metrics[metrics[i]])/len(results_metrics[metrics[i]]))
-        print("Variance of "+metrics[i]+" : %s" %(statistics.variance(results_metrics[metrics[i]])))
+        temp_dict_avg={}
+        temp_dict_var={}
+        for i in range(len(metrics)):
+            #print(results_metrics[metrics[i]])
+            temp_dict_avg[metrics[i]]=sum(results_metrics[metrics[i]])/len(results_metrics[metrics[i]])
+            temp_dict_var[metrics[i]]=np.var(results_metrics[metrics[i]])
+            #print("Average of " +metrics[i]+" :", sum(results_metrics[metrics[i]])/len(results_metrics[metrics[i]]))
+            #print("Variance of "+metrics[i]+" : %s" %(statistics.variance(results_metrics[metrics[i]])))
+        temp_dict_avg['latency']=sum(user_1.get_latencies())/len(user_1.get_latencies())
+        temp_dict_var['latency']=np.var(user_1.get_latencies())
 
+        avg_var_metrics[j]={'avg':temp_dict_avg, 'var':temp_dict_var}
+        print(avg_var_metrics)
+
+        del user_1
+        n_requests+=1
 
 
 
