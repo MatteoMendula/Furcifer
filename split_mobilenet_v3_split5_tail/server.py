@@ -38,7 +38,9 @@ def handle_post_request():
     response["error"] = False
 
     try:
-        response["tail_inference_result"] = mobilenetv3_split_5_tail_inference(head_inference_result=head_inference_result, model=model_tail)
+        inference = mobilenetv3_split_5_tail_inference(head_inference_result=head_inference_result, model=model_tail)
+        response["tail_inference_result"] = inference["tail_inference_result"]
+        response['tail_inference_time'] = inference['tail_inference_time']
     except Exception as e:
         print("Error: ", e)
         response["error"] = True

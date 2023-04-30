@@ -1,4 +1,4 @@
-FROM efficientnet-b0_server:latest
+FROM furcifer_base:latest
 WORKDIR /app
 COPY . .
 ENV FLASK_APP server.py
