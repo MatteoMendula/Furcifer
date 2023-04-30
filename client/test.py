@@ -6,8 +6,15 @@ import json
 from threading import Thread
 import time
 
+import EnergonPrometheusExporter
+
+global latency
+global switch
+latency = 0
+switch = True
+
 class User():
-    def __init__(self,number_request,type_conenction, set_tasks, req_per_sec, ip, port, route, start_time,duration) :
+    def __init__(self,number_request,type_conenction, set_tasks, req_per_sec, ip, port, route, start_time,duration, logger = None) :
         self.number_request=number_request
         self.type_connection=type_conenction
         self.set_tasks=set_tasks
@@ -18,6 +25,7 @@ class User():
         self.start_time=start_time
         self.duration=duration
         self.latencies=[]
+        self.logger = logger
 
     def send_async(self,url, json_data, headers, results):
         response = requests.post(url, data=json_data, headers=headers, timeout=10)
@@ -49,6 +57,8 @@ class User():
             }
             json_data = json.dumps(data)
             def send_req_per_second():
+                global latency
+
                 start_time = time.time()
                 threads = [None] * self.req_per_sec
                 results = []
@@ -60,9 +70,11 @@ class User():
                 print(" ".join(results))
                 end_time = time.time()
                 time_in_ms = (end_time - start_time) * 1000
+                
+                latency = time_in_ms
+
                 self.latencies.append(time_in_ms)
                 print("Time interval in milliseconds:", time_in_ms)
-
                 print(len(results))
                 if (time.time() < self.start_time+self.duration):
                     time.sleep(1)
@@ -115,8 +127,38 @@ class Logger(threading.Thread):
         self.stored_metrics['timestamp'] = [self.stored_metrics['timestamp'][j] for j in indexes]
         return self.stored_metrics   
 
+def export_loop(exporter):
+    global switch
+    global latency
+
+    prev_lat = 0
+    delta = 0
+
+    rec_new_lat = False
+
+    while switch:
+        if prev_lat != latency:
+            rec_new_lat = True
+            prev_lat = latency
+        else:
+            rec_new_lat = False 
+
+        if rec_new_lat:
+            end_time = time.time()
+            delta = end_time - start_time
+            start_time = end_time
+
+        exporter.run_metrics_loop(latency, delta)
+        
+        time.sleep(0.05)
 
 if __name__ == "__main__":
+    global switch
+    global latency
+    
+    switch = False
+    latency = 0
+    
     from sys import argv
     port = 8000
     duration = 10
@@ -144,12 +186,16 @@ if __name__ == "__main__":
     log_metrics.setDaemon(True)
     log_metrics.start()
     
+    exporter = EnergonPrometheusExporter()
+    exporter_thread = Thread(target=export_loop, args=(exporter,))
+    exporter_thread.start()
+
     avg_var_metrics={}
     n_requests = 1
     for j in range(num_tests):
         print("Testing "+ str(n_requests) + " requests per second")
         start_time_user=time.time()
-        user_1=User(10, 'BAD',set(), n_requests, ip, port, route, start_time_user, duration_user)
+        user_1=User(10, 'BAD',set(), n_requests, ip, port, route, start_time_user, duration_user, log_metrics)
         user_1.start()
 
         print("Getting the metrics ")
@@ -168,9 +214,23 @@ if __name__ == "__main__":
 
         avg_var_metrics[j]={'avg':temp_dict_avg, 'var':temp_dict_var}
         print(avg_var_metrics)
-
+        
+        log_metrics = user_l.logger
         del user_1
         n_requests+=1
+
+    switch = False
+    exporter_thread.join()
+
+
+
+
+
+
+
+
+
+
 
 
 
