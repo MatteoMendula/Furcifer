@@ -17,6 +17,9 @@ model_tail.cuda()
 model_head = torch.nn.DataParallel(model_head).cuda()
 model_tail = torch.nn.DataParallel(model_tail).cuda()
 
+model_head.eval()
+model_tail.eval()
+
 transform = transforms.Compose([
             transforms.ToTensor()
         ])
@@ -24,6 +27,15 @@ transform = transforms.Compose([
 input=transform(Image.open(('../client/000000001675.jpg'))).unsqueeze(0)
 
 output_head=model_head(input)
-output=model_tail(output_head)
-print(output)
-print(output.shape)
+outputs=model_tail(output_head)
+
+classes_probabilies = {}
+
+for idx in torch.topk(outputs, k=3).indices.squeeze(0).tolist():
+    prob = torch.softmax(outputs, dim=1)[0, idx].item()
+    prob_string = '{label:<75} ({p:.2f}%)'.format(label=idx, p=prob*100)
+    classes_probabilies[idx] = prob*100
+
+print(outputs)
+print(outputs.shape)
+print(classes_probabilies)
