@@ -9,9 +9,6 @@ import os
 from inference import mobilenetv3_split_5_tail_inference
 from mobilenetv3 import mobilenetv3
 
-os.environ['TAIL_SERVER_URL'] = 'localhost:8001/furcifer_split_mobilenet_v3_split5_tail'
-TAIL_SERVER_URL = os.getenv('TAIL_SERVER_URL')
-
 split_position=5
 bottleneck_channels=12
 
@@ -39,6 +36,7 @@ def handle_post_request():
 
     try:
         inference = mobilenetv3_split_5_tail_inference(head_inference_result=head_inference_result, model=model_tail)
+        print("inference", inference)
         response["tail_inference_result"] = inference["tail_inference_result"]
         response['tail_inference_time'] = inference['tail_inference_time']
     except Exception as e:

@@ -15,6 +15,7 @@ if os.environ.get('TAIL_SERVER_URL') is None:
     os.environ['TAIL_SERVER_URL'] = 'localhost:8001/furcifer_split_mobilenet_v3_split5_tail'
 
 TAIL_SERVER_URL = os.getenv('TAIL_SERVER_URL')
+print("TAIL_SERVER_URL: ", TAIL_SERVER_URL)
 
 split_position=5
 bottleneck_channels=12
@@ -47,6 +48,9 @@ def handle_post_request():
 
     try:
         inference = mobilenetv3_split_5_head_inference(image_unqueezed=image_unqueezed, model=model_head)
+        
+        print("inference", inference)
+        
         head_payload["head_inference_result"] = inference["head_inference_result"]
         head_payload['head_inference_time'] = inference['head_inference_time']
     except Exception as e:
