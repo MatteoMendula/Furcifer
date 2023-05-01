@@ -12,7 +12,7 @@ from inference import mobilenetv3_split_5_head_inference
 from mobilenetv3 import mobilenetv3
 
 if os.environ.get('TAIL_SERVER_URL') is None:
-    os.environ['TAIL_SERVER_URL'] = 'localhost:8001/furcifer_split_mobilenet_v3_split5_tail'
+    os.environ['TAIL_SERVER_URL'] = 'http://localhost:8050/furcifer_split_mobilenet_v3_split5_tail'
 
 TAIL_SERVER_URL = os.getenv('TAIL_SERVER_URL')
 print("TAIL_SERVER_URL: ", TAIL_SERVER_URL)
@@ -47,11 +47,9 @@ def handle_post_request():
     head_payload["error"] = False
 
     try:
-        inference = mobilenetv3_split_5_head_inference(image_unqueezed=image_unqueezed, model=model_head)
+        inference = mobilenetv3_split_5_head_inference(image_unqueezed=image_unqueezed, model=model_head)     
         
-        print("inference", inference)
-        
-        head_payload["head_inference_result"] = inference["head_inference_result"]
+        head_payload["head_inference_result"] = inference["head_inference_result"].cpu().detach().numpy().tolist()
         head_payload['head_inference_time'] = inference['head_inference_time']
     except Exception as e:
         print("Error: ", e)
@@ -64,7 +62,8 @@ def handle_post_request():
 
     # Send the inference result to the tail server
     headers = {'Content-Type': 'application/json'}
-    tail_response = requests.post(TAIL_SERVER_URL, headers=headers, data=head_payload['head_inference_result'])
+    json_data = json.dumps(head_payload)
+    tail_response = requests.post(TAIL_SERVER_URL, headers=headers, data=json_data)
 
     # Parse the tail_response content to a JSON object
     tail_payload = json.loads(tail_response.content) 

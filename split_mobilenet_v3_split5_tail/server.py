@@ -1,10 +1,7 @@
 from flask import Flask, request, jsonify
-from io import BytesIO
-import base64
-from PIL import Image
 import torch
 import torchvision.transforms as transforms
-import os
+import numpy as np
 
 from inference import mobilenetv3_split_5_tail_inference
 from mobilenetv3 import mobilenetv3
@@ -28,8 +25,15 @@ def hello():
 
 @app.route("/furcifer_split_mobilenet_v3_split5_tail", methods=["POST"])
 def handle_post_request():
-    data = request.get_json()
-    head_inference_result = data['head_inference_result']
+
+    try:
+        data = request.get_json()
+    except Exception as e:
+        print("Error: ", e)
+        return jsonify({"error": True, "tail_inference_result": "Error: " + str(e)})
+    
+    head_inference_result = np.array(data['head_inference_result'])
+    head_inference_result = torch.from_numpy(head_inference_result).cuda().float()
 
     response = {}
     response["error"] = False
