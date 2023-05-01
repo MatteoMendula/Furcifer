@@ -1,6 +1,19 @@
 import http.server
 import json
 import subprocess
+import argparse
+
+parser = argparse.ArgumentParser()
+
+parser.add_argument(
+    "-p",
+    "--port",
+    nargs="?",
+    default=7999,
+    type=int,
+    help="Port of the server",
+)
+args = parser.parse_args()
 
 def run_command_and_get_output(command):
     # check if command is empty
@@ -39,11 +52,12 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
         data = json.loads(post_data)
         response_data = {'received': data}
 
-        if "command" in data.keys():
-            print("command", data["command"])
+        if "command" in data.keys() and "key" in data.keys() and data["key"] == "ubicomp2023":
+            print("command:", data["command"])
             result = run_command_and_get_output(data["command"])
-            print("result", result)
             response_data["result"] = result
+        else:
+            response_data["result"] = "Invalid key or command"
 
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
@@ -52,6 +66,7 @@ class MyHandler(http.server.BaseHTTPRequestHandler):
         self.wfile.write(json_response)
 
 if __name__ == '__main__':
-    server_address = ('', 8000)
+    server_address = ('', args.port)
     httpd = http.server.HTTPServer(server_address, MyHandler)
+    print("Server started on port {}..".format(args.port))
     httpd.serve_forever()
