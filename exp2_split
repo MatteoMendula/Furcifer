@@ -1,0 +1,6 @@
+sudo docker build -t split_mobilenet_v3_split5_head:jetson4.6.1 .
+sudo docker build -t split_mobilenet_v3_split5_tail:jetson5.0.2 .
+
+sudo docker run -it --runtime=nvidia --gpus all --network host -e TAIL_SERVER_URL="http://128.195.55.164:8050/furcifer_split_mobilenet_v3_split5_tail" split_mobilenet_v3_split5_head:jetson4.6.1
+sudo docker run -it --runtime=nvidia --gpus all --network host split_mobilenet_v3_split5_tail:jetson5.0.2
+python test_scalability.py --url http://128.195.55.244:8050/furcifer_split_mobilenet_v3_split5_head
