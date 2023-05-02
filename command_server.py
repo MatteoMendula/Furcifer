@@ -256,4 +256,4 @@ class MyFlaskApp(Flask):
 if __name__ == '__main__':
     app = MyFlaskApp(__name__)
     print("args.port", args.port)
-    app.run(port=args.port)
+    app.run(port=args.port, host='10.42.0.84')
