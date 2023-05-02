@@ -21,6 +21,14 @@ parser.add_argument(
     help="Port of the server",
 )
 parser.add_argument(
+    "-h",
+    "--host",
+    nargs="?",
+    default="localhost",
+    type=str,
+    help="Host of the server",
+)
+parser.add_argument(
     "-i",
     "--inference_port",
     nargs="?",
@@ -256,4 +264,5 @@ class MyFlaskApp(Flask):
 if __name__ == '__main__':
     app = MyFlaskApp(__name__)
     print("args.port", args.port)
-    app.run(port=args.port, host='10.42.0.84')
+    print("args.host", args.host)
+    app.run(port=args.port, host=args.host)
