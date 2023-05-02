@@ -145,6 +145,7 @@ class MyFlaskApp(Flask):
         self.add_url_rule('/execute_command', 'execute_command', self.handle_post_request_command, methods=['POST'])
         self.add_url_rule('/sample_camera_and_send_image_for_inference', 'sample_camera_and_send_image_for_inference', self.sample_camera_and_send_image_for_inference, methods=['POST'])
         self.add_url_rule('/stop_camera_sampling', 'stop_camera_sampling', self.stop_camera_sampling, methods=['POST'])
+        self.add_url_rule('/set_server_url', 'set_server_url', self.set_server_url, methods=['POST'])
         self.webcam_request_sender = None
         self.inference_metric_exporter = None
 
@@ -208,6 +209,20 @@ class MyFlaskApp(Flask):
         response_data["result"] = "Camera sampling stopped!"
         return jsonify(response_data)
 
+    def set_server_url(self):
+        data = request.get_json()
+        response_data = {'received': data}
+        if not "key" in data.keys() or data["key"] != "ubicomp2023":
+            response_data["result"] = "No key in the request"
+            return jsonify(response_data)
+        if not "server_url" in data.keys():
+            response_data["result"] = "No server_url in the request"
+            return jsonify(response_data)
+        print("server_url:", data["server_url"])
+        self.webcam_request_sender.set_server_url(data["server_url"])
+        response_data["result"] = "Server URL set!"
+        return jsonify(response_data)
+
     def run_command_and_get_output(self, command):
         # check if command is empty
         command_output = {}
@@ -234,7 +249,6 @@ class MyFlaskApp(Flask):
         with self.app_context():
             self.init()
         super(MyFlaskApp, self).run(host=host, port=port, debug=debug, load_dotenv=load_dotenv, **options)
-
 
 
 if __name__ == '__main__':
