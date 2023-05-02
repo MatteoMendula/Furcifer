@@ -7,6 +7,7 @@ from flask import Flask, request, jsonify
 import threading
 import time
 import base64
+import os
 from prometheus_client import start_http_server, Gauge, Info
 
 # ------------------------- PARAMETERS -------------------------
@@ -81,6 +82,7 @@ class WebcamRequestSender:
             if len(self.frames_to_send) > 0:
                 print("len(self.frames_to_send)", len(self.frames_to_send))
                 start_time = time.time()
+                # TO DO: send the fresher frames first
                 max_frames_to_send = min(self.frame_rate, len(self.frames_to_send))
                 threads = [None] * max_frames_to_send
                 results = []
@@ -246,11 +248,12 @@ class MyFlaskApp(Flask):
         return command_output   
 
     def run(self, host=None, port=None, debug=None, load_dotenv=True, **options):
-        with self.app_context():
-            self.init()
+        if not self.debug or os.getenv('WERKZEUG_RUN_MAIN') == 'true':
+            with self.app_context():
+                self.init()
         super(MyFlaskApp, self).run(host=host, port=port, debug=debug, load_dotenv=load_dotenv, **options)
-
 
 if __name__ == '__main__':
     app = MyFlaskApp(__name__)
-    app.run(port=args.port, host='localhost', debug=True)
+    print("args.port", args.port)
+    app.run(port=args.port, host='localhost')
