@@ -59,15 +59,24 @@ class WebcamRequestSender:
         self.sender_loop_thread = threading.Thread(target=self.send_camera_requests, args=())
         self.sample_loop_thread.start()
         self.sender_loop_thread.start()
-
-    def set_is_sampling_from_camera_started(self, started):
-        self.is_sampling_from_camera_started = started
-
-    def set_server_url(self, server_url):
-        self.server_url = server_url
+        self.current_state = {}
+        self.current_state["device_name"] = "furcifer_webcam_request_sender"
+        self.current_state["inference_server_url"] = self.server_url
+        self.current_state["is_sampling_from_camera_started"] = str(self.is_sampling_from_camera_started)
+        self.inference_metric_exporter.set_device_info(self.current_state)
 
     def set_frame_rate(self, frame_rate):
         self.frame_rate = int(frame_rate)
+    
+    def set_server_url(self, server_url):
+        self.server_url = server_url
+        self.current_state["inference_server_url"] = self.server_url
+        self.inference_metric_exporter.set_device_info(self.current_state)
+
+    def set_is_sampling_from_camera_started(self, started):
+        self.is_sampling_from_camera_started = started
+        self.current_state["is_sampling_from_camera_started"] = str(self.is_sampling_from_camera_started)
+        self.inference_metric_exporter.set_device_info(self.current_state)
 
     def sample_from_camera(self):
         while True:
@@ -120,23 +129,26 @@ class WebcamRequestSender:
 
 # ------------------------- INFERENCE METRICS PROMETHEUS EXPORTER -------------------------
 class InferenceMetricsExporter(threading.Thread):
-    def __init__(self, app_port=9878, polling_interval_seconds=0.05):
+    def __init__(self, app_port=9878):
         super(InferenceMetricsExporter, self).__init__()
         self.daemon = True 
         self.app_port = app_port
-        self.polling_interval_seconds = polling_interval_seconds
-        # self.device_info = Info("furcifer_data_export_info", "Device info")
+        self.device_info = Info("furcifer_data_export_info", "Device info")
         self.latency = Gauge("furcifer_latency_ms", "Latency in milli seconds")
         self.frames_per_second = Gauge("furcifer_fps", "Frames per second")
+        self.device_name = "not_set"
+        self.inference_server_url = "not_set"
+        self.is_sampling_from_camera_started = False
         self.init_server()
 
     def init_server(self):
-        # self.device_info.info(
-        #     {
-        #         "app_port": self.app_port, 
-        #         "polling_interval_seconds": self.polling_interval_seconds, 
-        #     }
-        # )
+        self.device_info.info(
+            {
+                "device_name": self.device_name,
+                "inference_server_url": self.inference_server_url,
+                "is_sampling_from_camera_started": str(self.is_sampling_from_camera_started),
+            }
+        )
         self.latency.set(-1)
         self.frames_per_second.set(-1)
         start_http_server(self.app_port)
@@ -147,12 +159,15 @@ class InferenceMetricsExporter(threading.Thread):
     def set_frames_per_second(self, fps):
         self.frames_per_second.set(fps)
 
+    def set_device_info(self, device_info):
+        self.device_info.info(device_info)
+
 # ------------------------- COMMAND WEB SERVER -------------------------
 class MyFlaskApp(Flask):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.add_url_rule('/', 'hello', self.hello, methods=['GET'])
-        self.add_url_rule('/execute_command', 'execute_command', self.handle_post_request_command, methods=['POST'])
+        self.add_url_rule('/execute_command', 'execute_command', self.execute_command, methods=['POST'])
         self.add_url_rule('/sample_camera_and_send_image_for_inference', 'sample_camera_and_send_image_for_inference', self.sample_camera_and_send_image_for_inference, methods=['POST'])
         self.add_url_rule('/stop_camera_sampling', 'stop_camera_sampling', self.stop_camera_sampling, methods=['POST'])
         self.add_url_rule('/set_server_url', 'set_server_url', self.set_server_url, methods=['POST'])
@@ -180,7 +195,7 @@ class MyFlaskApp(Flask):
     def hello(self):
         return "Hello, World! This is command server!"
     
-    def handle_post_request_command(self):
+    def execute_command(self):
         data = request.get_json()
         response_data = {'received': data}
         if not "key" in data.keys() or data["key"] != "ubicomp2023":
