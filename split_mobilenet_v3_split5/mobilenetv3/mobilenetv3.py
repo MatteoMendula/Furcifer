@@ -423,12 +423,16 @@ class SplitBottleneck(nn.Module):
 
     def forward(self, x):
         if self.subnet == 'head':
+            print('head input',x.shape)
             z = self.compressor(x)
             self.size = z.shape[-1]*z.shape[-2]*z.shape[-3]
+            print('head output',z.shape)
             return z
         elif self.subnet =='tail':
+            print('tail input',x.shape)
             z = self.decompressor(x)
             self.size = z.shape[-1]*z.shape[-2]*z.shape[-3]
+            print('tail output',z.shape)
             return z
 
         
