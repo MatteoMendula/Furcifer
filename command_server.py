@@ -156,7 +156,7 @@ class MyFlaskApp(Flask):
         if self.inference_metric_exporter == None:
             self.inference_metric_exporter = InferenceMetricsExporter()
         # inference_metric_exporter.setDaemon(True)
-        self.inference_metric_exporter.start()
+        # self.inference_metric_exporter.start()
 
         # wait for the InferenceMetricsExporter server to start
         print("Waiting for the InferenceMetricsExporter to start...")
