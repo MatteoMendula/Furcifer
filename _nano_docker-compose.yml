@@ -12,6 +12,7 @@ services:
     runtime: nvidia
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
+      - DEBUG=http://10.42.0.84:8050/furcifer_split_mobilenet_v3_split5_tail
 
 
   # furcifer_efficientnet_b0:
