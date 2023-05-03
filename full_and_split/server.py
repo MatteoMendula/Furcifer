@@ -44,7 +44,7 @@ def hello():
     return "Hello, World! - furcifer_full_and_split"
 
 @app.route("/furcifer_full_and_split_full", methods=["POST"])
-def handle_post_request():
+def handle_furcifer_full_and_split_full_post_request():
     data = request.get_json()
     img_base64 = data['image']
     img_data = base64.b64decode(img_base64)
@@ -66,7 +66,7 @@ def handle_post_request():
     return jsonify(response)
 
 @app.route("/furcifer_full_and_split_head", methods=["POST"])
-def handle_post_request():
+def handle_furcifer_full_and_split_head_post_request():
     data = request.get_json()
     img_base64 = data['image']
     img_data = base64.b64decode(img_base64)
