@@ -96,7 +96,7 @@ class WebcamRequestSender:
     
     def send_camera_requests(self):
         while True:
-            if len(self.frames_to_send) > 0:
+            if len(self.frames_to_send) >= self.frame_rate:
                 print("len(self.frames_to_send)", len(self.frames_to_send))
                 start_time = time.time()
                 # TO DO: send the fresher frames first
