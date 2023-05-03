@@ -11,6 +11,15 @@ services:
     environment:
       - NVIDIA_VISIBLE_DEVICES=all
 
+  furcifer_split_mobilenet_v3_split5_head:
+    image: furcifer_split_mobilenet_v3_split5_head:jetson5.0.2
+    hostname: furcifer_split_mobilenet_v3_split5_head
+    expose:
+      - "8050"
+    runtime: nvidia
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+
   nginx:
     image: nginx:latest
     volumes:

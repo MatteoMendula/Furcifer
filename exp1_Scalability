@@ -7,3 +7,5 @@ sudo docker-compose scale furcifer_efficientnet_b0=2   ---> deprecated
 sudo docker-compose -f _jetson_docker-compose.yml up -d --scale furcifer_efficientnet_b0=2 --no-recreate
 
 sudo docker-compose down
+
+prometheus --config.file=./eth0_nano_prometheus.yml

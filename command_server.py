@@ -63,6 +63,8 @@ class WebcamRequestSender:
         self.current_state["device_name"] = "furcifer_webcam_request_sender"
         self.current_state["inference_server_url"] = self.server_url
         self.current_state["is_sampling_from_camera_started"] = str(self.is_sampling_from_camera_started)
+        self.current_state["timeout_error"] = "False"
+        self.current_state["inference_results"] = "None"
         self.inference_metric_exporter.set_device_info(self.current_state)
 
     def set_frame_rate(self, frame_rate):
@@ -89,10 +91,14 @@ class WebcamRequestSender:
                         _, frame = self.vid.read()
                         self.frames_to_send.append(frame)
         
-
-    def send_async(self,url, json_data, headers, results):
-        response = requests.post(url, data=json_data, headers=headers, timeout=10)
-        results.append(response.text)
+    def send_async(self, url, json_data, headers, results):
+        try:
+            response = requests.post(url, data=json_data, headers=headers, timeout=10)
+            results.append(response.text)
+        except requests.exceptions.Timeout:
+            print("Request timed out after 10 seconds.")
+            self.current_state["timeout_error"] = "True"
+            self.inference_metric_exporter.set_device_info(self.current_state)
     
     def send_camera_requests(self):
         while True:
@@ -121,6 +127,8 @@ class WebcamRequestSender:
                 for i in range(len(threads)):
                     threads[i].join()
                 print("results", " ".join(results))
+                self.current_state["inference_results"] = str(results)
+                self.inference_metric_exporter.set_device_info(self.current_state)
                 end_time = time.time()
                 time_in_ms = (end_time - start_time) * 1000
                 print("latency ", time_in_ms)
