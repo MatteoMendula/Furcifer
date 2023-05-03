@@ -12,7 +12,7 @@ services:
       - NVIDIA_VISIBLE_DEVICES=all
 
   furcifer_split_mobilenet_v3_split5_head:
-    image: furcifer_split_mobilenet_v3_split5_head:jetson5.0.2
+    image: furcifer_split_mobilenet_v3_split5_head:jetson4.6.1
     hostname: furcifer_split_mobilenet_v3_split5_head
     expose:
       - "8050"

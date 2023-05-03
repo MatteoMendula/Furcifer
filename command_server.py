@@ -97,7 +97,10 @@ class WebcamRequestSender:
             results.append(response.text)
         except requests.exceptions.Timeout:
             print("Request timed out after 10 seconds.")
-            self.current_state["timeout_error"] = "True"
+            if "localhost" in self.server_url:
+                self.current_state["timeout_error"] = "LOCALHOST"
+            else:
+                self.current_state["timeout_error"] = "EDGE"
             self.inference_metric_exporter.set_device_info(self.current_state)
     
     def send_camera_requests(self):
