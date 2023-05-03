@@ -125,7 +125,6 @@ class WebcamRequestSender:
                 time_in_ms = (end_time - start_time) * 1000
                 print("latency ", time_in_ms)
                 self.inference_metric_exporter.set_latency(time_in_ms)
-                time.sleep(1)
 
 # ------------------------- INFERENCE METRICS PROMETHEUS EXPORTER -------------------------
 class InferenceMetricsExporter(threading.Thread):
