@@ -9,6 +9,7 @@ import time
 import base64
 import os
 from prometheus_client import start_http_server, Gauge, Info
+from io import BytesIO
 
 # ------------------------- PARAMETERS -------------------------
 parser = argparse.ArgumentParser()
@@ -54,17 +55,20 @@ class WebcamRequestSender:
         self.inference_metric_exporter = inference_metric_exporter
         self.is_sampling_from_camera_started = False
         self.frames_to_send = []
-        self.vid = cv2.VideoCapture(0)
+        self.vid = cv2.VideoCapture(4)
         self.sample_loop_thread = threading.Thread(target=self.sample_from_camera, args=())
         self.sender_loop_thread = threading.Thread(target=self.send_camera_requests, args=())
         self.sample_loop_thread.start()
         self.sender_loop_thread.start()
+        self.last_sending_timestamp = time.time()
+
         self.current_state = {}
         self.current_state["device_name"] = "furcifer_webcam_request_sender"
         self.current_state["inference_server_url"] = self.server_url
         self.current_state["is_sampling_from_camera_started"] = str(self.is_sampling_from_camera_started)
         self.current_state["timeout_error"] = "False"
         self.current_state["inference_results"] = "None"
+
         self.inference_metric_exporter.set_device_info(self.current_state)
 
     def set_frame_rate(self, frame_rate):
@@ -94,6 +98,9 @@ class WebcamRequestSender:
     def send_async(self, url, json_data, headers, results):
         try:
             response = requests.post(url, data=json_data, headers=headers, timeout=10)
+            size_b = len(response.content)
+            size_MB = size_b / 1000000
+            self.inference_metric_exporter.set_size_last_pkt_received(size_MB)
             results.append(response.text)
         except requests.exceptions.Timeout:
             print("Request timed out after 10 seconds.")
@@ -105,15 +112,26 @@ class WebcamRequestSender:
     
     def send_camera_requests(self):
         while True:
-            if len(self.frames_to_send) >= self.frame_rate and self.frame_rate != -1:
+            start_time = time.time()
+            if self.is_sampling_from_camera_started and start_time - self.last_sending_timestamp >= 1:
                 print("len(self.frames_to_send)", len(self.frames_to_send))
-                start_time = time.time()
-                # TO DO: send the fresher frames first
+                self.inference_metric_exporter.set_frames_per_second(len(self.frames_to_send))
+                
+                print("start_time", start_time)
+                print("self.self.last_sending_timestamp", self.last_sending_timestamp)
+                self.inference_metric_exporter.set_time_passed_since_last_sending(start_time - self.last_sending_timestamp)
+                self.last_sending_timestamp = start_time 
+
                 max_frames_to_send = min(self.frame_rate, len(self.frames_to_send))
                 threads = [None] * max_frames_to_send
                 results = []
-                for i in range(max_frames_to_send):
-                    _, buffer = cv2.imencode('.jpg', self.frames_to_send[i])
+                for i, frame in enumerate(self.frames_to_send[-max_frames_to_send:]):
+                    _, buffer = cv2.imencode('.jpg', frame)
+                    stream = BytesIO(buffer)
+                    size_b = len(stream.getbuffer())
+                    size_MB = size_b / 1000000
+                    print("---- SENT img_bytes (MB) ------", size_MB)
+                    self.inference_metric_exporter.set_size_last_pkt_sent(size_MB)
                     img_base64 = base64.b64encode(buffer).decode('utf-8')
                     headers = {"Content-type": "application/json"}
                     data = {
@@ -124,7 +142,6 @@ class WebcamRequestSender:
                     threads[i] = threading.Thread(target=self.send_async, args=(self.server_url, json_data, headers, results,))
                     threads[i].start()
 
-                self.inference_metric_exporter.set_frames_per_second(len(self.frames_to_send))
                 self.frames_to_send = []
                 # wait for all the threads to finish
                 for i in range(len(threads)):
@@ -136,6 +153,7 @@ class WebcamRequestSender:
                 time_in_ms = (end_time - start_time) * 1000
                 print("latency ", time_in_ms)
                 self.inference_metric_exporter.set_latency(time_in_ms)
+                time.sleep(1)
 
 # ------------------------- INFERENCE METRICS PROMETHEUS EXPORTER -------------------------
 class InferenceMetricsExporter(threading.Thread):
@@ -146,6 +164,10 @@ class InferenceMetricsExporter(threading.Thread):
         self.device_info = Info("furcifer_data_export_info", "Device info")
         self.latency = Gauge("furcifer_latency_ms", "Latency in milli seconds")
         self.frames_per_second = Gauge("furcifer_fps", "Frames per second")
+        self.size_last_pkt_sent = Gauge("furcifer_size_last_pkt_sent_MB", "Size of the last packet sent in MB")
+        self.size_last_pkt_received = Gauge("furcifer_size_last_pkt_received_MB", "Size of the last packet received in MB")
+        self.time_passed_since_last_sending = Gauge("furcifer_time_passed_since_last_sending", "Time passed since last sending")
+
         self.device_name = "not_set"
         self.inference_server_url = "not_set"
         self.is_sampling_from_camera_started = False
@@ -161,6 +183,9 @@ class InferenceMetricsExporter(threading.Thread):
         )
         self.latency.set(-1)
         self.frames_per_second.set(-1)
+        self.size_last_pkt_sent.set(-1)
+        self.size_last_pkt_received.set(-1)
+        self.time_passed_since_last_sending.set(-1)
         start_http_server(self.app_port)
 
     def set_latency(self, latency):
@@ -169,8 +194,17 @@ class InferenceMetricsExporter(threading.Thread):
     def set_frames_per_second(self, fps):
         self.frames_per_second.set(fps)
 
+    def set_size_last_pkt_sent(self, size):
+        self.size_last_pkt_sent.set(size)
+
+    def set_size_last_pkt_received(self, size):
+        self.size_last_pkt_received.set(size)
+
     def set_device_info(self, device_info):
         self.device_info.info(device_info)
+
+    def set_time_passed_since_last_sending(self, time_passed):
+        self.time_passed_since_last_sending.set(time_passed)
 
 # ------------------------- COMMAND WEB SERVER -------------------------
 class MyFlaskApp(Flask):

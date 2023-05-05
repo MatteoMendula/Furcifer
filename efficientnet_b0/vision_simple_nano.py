@@ -8,8 +8,6 @@ import glob
 from efficientnet_pytorch import EfficientNet
 
 def efficient_net_inference(img_pil, model, processor = 'gpu'):
-
-
     delay_loading = 0
     if type(model) == str:
         if processor == 'gpu':
@@ -57,8 +55,10 @@ def efficient_net_inference(img_pil, model, processor = 'gpu'):
 
     classes_probabilies = {}
 
+    print("---- outputs ------", outputs.shape)
+
     # PREDICTIONS
-    for idx in torch.topk(outputs, k=3).indices.squeeze(0).tolist():
+    for idx in torch.topk(outputs, k=1).indices.squeeze(0).tolist():
         prob = torch.softmax(outputs, dim=1)[0, idx].item()
         prob_string = '{label:<75} ({p:.2f}%)'.format(label=labels_map[idx], p=prob*100)
         classes_probabilies[labels_map[idx]] = prob*100

@@ -23,6 +23,8 @@ def handle_post_request():
     img_base64 = data['image']
     img_data = base64.b64decode(img_base64)
     img_bytes = BytesIO(img_data)
+    size = len(img_bytes.getbuffer())
+    print("---- RECEVIVED img_bytes ------", size)
     img_pil = Image.open(img_bytes)
 
     try:
@@ -30,8 +32,6 @@ def handle_post_request():
     except Exception as e:
         print("Error: ", e)
         inference_result = "Error: " + str(e)
-
-    # inference_result = efficient_net_inference(img_pil=img_pil, model='efficientnet-b0')
 
     response = {
         'inference_result': inference_result
