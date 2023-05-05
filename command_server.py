@@ -55,7 +55,7 @@ class WebcamRequestSender:
         self.inference_metric_exporter = inference_metric_exporter
         self.is_sampling_from_camera_started = False
         self.frames_to_send = []
-        self.vid = cv2.VideoCapture(4)
+        self.vid = cv2.VideoCapture(0)
         self.sample_loop_thread = threading.Thread(target=self.sample_from_camera, args=())
         self.sender_loop_thread = threading.Thread(target=self.send_camera_requests, args=())
         self.sample_loop_thread.start()
