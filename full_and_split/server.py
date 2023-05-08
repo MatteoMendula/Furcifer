@@ -97,6 +97,7 @@ def handle_furcifer_full_and_split_head_post_request():
         inference = mobilenetv3_split_5_head_inference(image_unqueezed=image_unqueezed, model=model_head)     
         
         head_payload["head_inference_result"] = inference["head_inference_result"].cpu().detach().numpy()
+
         print("type head_inference_result: ", head_payload["head_inference_result"].dtype)
         print("shape head_inference_result: ", head_payload["head_inference_result"].shape)
         

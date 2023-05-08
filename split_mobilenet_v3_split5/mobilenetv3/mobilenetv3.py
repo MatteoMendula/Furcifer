@@ -129,7 +129,7 @@ class InvertedResidual(nn.Module):
 class Bottleneck(nn.Module):
     def __init__(self, input_channels, bottleneck_channels):
         super().__init__()
-        print(f"Building bottleneck with size:{bottleneck_channels}")
+        # print(f"Building bottleneck with size:{bottleneck_channels}")
         self.input_channels = input_channels
         self.bottleneck_channels = bottleneck_channels
         self.size = None
@@ -397,7 +397,7 @@ class SplitMobileNetV3Head(nn.Module):
 class SplitBottleneck(nn.Module):
     def __init__(self, input_channels, bottleneck_channels,subnet='head'):
         super().__init__()
-        print(f"Building bottleneck with size:{bottleneck_channels}")
+        # print(f"Building bottleneck with size:{bottleneck_channels}")
         self.input_channels = input_channels
         self.bottleneck_channels = bottleneck_channels
         self.size = None
@@ -423,16 +423,12 @@ class SplitBottleneck(nn.Module):
 
     def forward(self, x):
         if self.subnet == 'head':
-            print('head input',x.shape)
             z = self.compressor(x)
             self.size = z.shape[-1]*z.shape[-2]*z.shape[-3]
-            print('head output',z.shape)
             return z
         elif self.subnet =='tail':
-            print('tail input',x.shape)
             z = self.decompressor(x)
             self.size = z.shape[-1]*z.shape[-2]*z.shape[-3]
-            print('tail output',z.shape)
             return z
 
         

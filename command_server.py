@@ -22,6 +22,14 @@ parser.add_argument(
     help="Port of the server",
 )
 parser.add_argument(
+    "-c",
+    "--camera_id",
+    nargs="?",
+    default=0,
+    type=int,
+    help="ID of the camera",
+)
+parser.add_argument(
     "-hi",
     "--host_ip",
     nargs="?",
@@ -55,7 +63,7 @@ class WebcamRequestSender:
         self.inference_metric_exporter = inference_metric_exporter
         self.is_sampling_from_camera_started = False
         self.frames_to_send = []
-        self.vid = cv2.VideoCapture(0)
+        self.vid = cv2.VideoCapture(args.camera_id, cv2.CAP_V4L2)
         self.sample_loop_thread = threading.Thread(target=self.sample_from_camera, args=())
         self.sender_loop_thread = threading.Thread(target=self.send_camera_requests, args=())
         self.sample_loop_thread.start()
@@ -91,6 +99,8 @@ class WebcamRequestSender:
                 while self.is_sampling_from_camera_started:
                     time_elapsed = time.time() - prev
                     if time_elapsed > 1./self.frame_rate:
+                        # print current fps
+                        print("FPS", 1/time_elapsed)
                         prev = time.time()
                         _, frame = self.vid.read()
                         self.frames_to_send.append(frame)
