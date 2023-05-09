@@ -224,6 +224,7 @@ class MyFlaskApp(Flask):
         self.add_url_rule('/sample_camera_and_send_image_for_inference', 'sample_camera_and_send_image_for_inference', self.sample_camera_and_send_image_for_inference, methods=['POST'])
         self.add_url_rule('/stop_camera_sampling', 'stop_camera_sampling', self.stop_camera_sampling, methods=['POST'])
         self.add_url_rule('/set_server_url', 'set_server_url', self.set_server_url, methods=['POST'])
+        self.add_url_rule('/warmup', 'warmup', self.warmup, methods=['POST'])
         self.webcam_request_sender = None
         self.inference_metric_exporter = None
 
@@ -275,6 +276,19 @@ class MyFlaskApp(Flask):
         if not self.webcam_request_sender.is_sampling_from_camera_started:
             self.webcam_request_sender.set_is_sampling_from_camera_started(True)
         response_data["result"] = "Camera sampling started!"
+        return jsonify(response_data)
+    
+    def warmup(self):
+        data = request.get_json()
+        response_data = {'received': data}
+        if not "key" in data.keys() or data["key"] != "ubicomp2023":
+            response_data["result"] = "No key in the request"
+            return jsonify(response_data)
+        self.webcam_request_sender.set_frame_rate(1)
+        if not self.webcam_request_sender.is_sampling_from_camera_started:
+            self.webcam_request_sender.set_is_sampling_from_camera_started(True)
+        time.sleep(5)
+        response_data["result"] = "Camera sampling warmup done!"
         return jsonify(response_data)
     
     def stop_camera_sampling(self):
