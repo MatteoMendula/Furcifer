@@ -287,7 +287,7 @@ class MyFlaskApp(Flask):
         self.webcam_request_sender.set_frame_rate(1)
         if not self.webcam_request_sender.is_sampling_from_camera_started:
             self.webcam_request_sender.set_is_sampling_from_camera_started(True)
-        time.sleep(5)
+        time.sleep(10)
         response_data["result"] = "Camera sampling warmup done!"
         return jsonify(response_data)
     

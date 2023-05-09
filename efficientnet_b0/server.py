@@ -1,3 +1,5 @@
+#!/usr/bin/python3
+
 from flask import Flask, request, jsonify
 from io import BytesIO
 import base64
