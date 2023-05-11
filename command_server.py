@@ -125,9 +125,12 @@ class WebcamRequestSender:
         start_time = None
         fps_sent = 0
         while True:
-
+            
 
             if self.is_sampling_from_camera_started and len(self.frames_to_send) > 0:
+                print("Sending frame...")
+                print("Frames in queue", len(self.frames_to_send))
+                print("Frames fps_sent", fps_sent)
                 if start_time is None:
                     start_time = time.time()
                 if time.time() - start_time >= 1:
