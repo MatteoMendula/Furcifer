@@ -126,15 +126,15 @@ class WebcamRequestSender:
         fps_sent = 0
         while True:
 
-            if time.time() - start_time >= 1:
-                start_time = time.time()
-                self.inference_metric_exporter.set_frames_per_second_actual(fps_sent)
-                fps_sent = 0
 
             if self.is_sampling_from_camera_started and len(self.frames_to_send) > 0:
                 if start_time is None:
                     start_time = time.time()
-                    
+                if time.time() - start_time >= 1:
+                    start_time = time.time()
+                    self.inference_metric_exporter.set_frames_per_second_actual(fps_sent)
+                    fps_sent = 0
+
                 self.inference_metric_exporter.set_frames_per_second_queue(len(self.frames_to_send))
 
                 self.inference_metric_exporter.set_time_passed_since_last_sending(start_time - self.last_sending_timestamp)
