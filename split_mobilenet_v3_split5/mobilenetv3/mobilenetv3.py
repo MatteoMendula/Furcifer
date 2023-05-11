@@ -273,10 +273,11 @@ def mobilenetv3_small(**kwargs):
 class SplitMobileNetV3(nn.Module):
     def __init__(self, pretrained=False, split_position=-1, bottleneck_channels=-1 ,split_name='',**kwargs) -> None:
         super(SplitMobileNetV3,self).__init__()
-        model = mobilenetv3_large(**kwargs)
+        model = mobilenetv3_small(**kwargs)
         self.split_name=split_name
         if pretrained:
-            state_dict = torch.load('mobilenetv3/pretrained/mobilenetv3-large-1cd25616.pth')
+            # state_dict = torch.load('mobilenetv3/pretrained/mobilenetv3-large-1cd25616.pth')
+            state_dict = torch.load('mobilenetv3/pretrained/mobilenetv3-small-55df8e1f.pth')
             state_dict.pop("classifier.3.weight")
             state_dict.pop("classifier.3.bias")
             model.load_state_dict(state_dict, strict=False)
@@ -330,9 +331,10 @@ class SplitMobileNetV3(nn.Module):
 class SplitMobileNetV3Head(nn.Module):
     def __init__(self, pretrained=False, split_position=-1, bottleneck_channels=-1 ,split_name='',**kwargs) -> None:
         super(SplitMobileNetV3,self).__init__()
-        model = mobilenetv3_large(**kwargs)
+        model = mobilenetv3_small(**kwargs)
         if pretrained:
-            state_dict = torch.load('mobilenetv3/pretrained/mobilenetv3-large-1cd25616.pth')
+            # state_dict = torch.load('mobilenetv3/pretrained/mobilenetv3-large-1cd25616.pth')
+            state_dict = torch.load('mobilenetv3/pretrained/mobilenetv3-small-55df8e1f.pth')
             state_dict.pop("classifier.3.weight")
             state_dict.pop("classifier.3.bias")
             model.load_state_dict(state_dict, strict=False)

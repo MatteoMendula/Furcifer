@@ -120,7 +120,50 @@ class WebcamRequestSender:
                 self.current_state["timeout_error"] = "EDGE"
             self.inference_metric_exporter.set_device_info(self.current_state)
     
+
     def send_camera_requests(self):
+        start_time = None
+        fps_sent = 0
+        while True:
+
+            if time.time() - start_time >= 1:
+                start_time = time.time()
+                self.inference_metric_exporter.set_frames_per_second_actual(fps_sent)
+                fps_sent = 0
+
+            if self.is_sampling_from_camera_started and len(self.frames_to_send) > 0:
+                if start_time is None:
+                    start_time = time.time()
+                    
+                self.inference_metric_exporter.set_frames_per_second_queue(len(self.frames_to_send))
+
+                self.inference_metric_exporter.set_time_passed_since_last_sending(start_time - self.last_sending_timestamp)
+                self.last_sending_timestamp = start_time 
+
+                results = []
+                frame = self.frames_to_send.pop(0)
+                _, buffer = cv2.imencode('.jpg', frame)
+                img_base64 = base64.b64encode(buffer).decode('utf-8')
+                headers = {"Content-type": "application/json"}
+                data = {
+                    "type_task": "IMAGE_CLASS",
+                    "image": img_base64
+                }
+                json_data = json.dumps(data)
+                thread = threading.Thread(target=self.send_async, args=(self.server_url, json_data, headers, results,))
+                thread.start()
+                thread.join()
+                fps_sent += 1
+
+                self.current_state["inference_results"] = str(results)
+                self.inference_metric_exporter.set_device_info(self.current_state)
+
+                end_time = time.time()
+                time_in_ms = (end_time - start_time) * 1000
+                self.inference_metric_exporter.set_latency(time_in_ms)      
+
+
+    def bk_send_camera_requests(self):
         while True:
             start_time = time.time()
             if self.is_sampling_from_camera_started and start_time - self.last_sending_timestamp >= 1:
@@ -172,7 +215,10 @@ class InferenceMetricsExporter(threading.Thread):
         self.app_port = app_port
         self.device_info = Info("furcifer_data_export_info", "Device info")
         self.latency = Gauge("furcifer_latency_ms", "Latency in milli seconds")
-        self.frames_per_second = Gauge("furcifer_fps", "Frames per second")
+
+        self.frames_per_second_queue = Gauge("furcifer_fps_queue", "Frames per second inside queue")
+        self.frames_per_second_actual = Gauge("furcifer_fps_actual", "Frames per second actually sent")
+        
         self.size_last_pkt_sent = Gauge("furcifer_size_last_pkt_sent_MB", "Size of the last packet sent in MB")
         self.size_last_pkt_received = Gauge("furcifer_size_last_pkt_received_MB", "Size of the last packet received in MB")
         self.time_passed_since_last_sending = Gauge("furcifer_time_passed_since_last_sending", "Time passed since last sending")
@@ -191,7 +237,8 @@ class InferenceMetricsExporter(threading.Thread):
             }
         )
         self.latency.set(-1)
-        self.frames_per_second.set(-1)
+        self.frames_per_second_queue.set(-1)
+        self.frames_per_second_actual.set(-1)
         self.size_last_pkt_sent.set(-1)
         self.size_last_pkt_received.set(-1)
         self.time_passed_since_last_sending.set(-1)
@@ -200,8 +247,11 @@ class InferenceMetricsExporter(threading.Thread):
     def set_latency(self, latency):
         self.latency.set(latency)
 
-    def set_frames_per_second(self, fps):
-        self.frames_per_second.set(fps)
+    def set_frames_per_second_queue(self, fps):
+        self.frames_per_second_queue.set(fps)
+
+    def set_frames_per_second_actual(self, fps):
+        self.frames_per_second_actual.set(fps)
 
     def set_size_last_pkt_sent(self, size):
         self.size_last_pkt_sent.set(size)
