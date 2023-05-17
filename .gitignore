@@ -1,2 +1,4 @@
 __pycache__
 efficientnet-b0_server/__pycache__
+yoshi_split/models/head_model.pt
+yoshi_split/models/tail_model.pt

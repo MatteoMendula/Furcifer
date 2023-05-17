@@ -3,8 +3,8 @@ import pickle
 from PIL import Image
 import torchvision.transforms as transforms
 
-head_model_loaded = torch.jit.load('head_model.pt')
-tail_model_loaded = torch.jit.load('tail_model.pt')
+head_model_loaded = torch.jit.load('./models/head_model.pt')
+tail_model_loaded = torch.jit.load('./models/tail_model.pt')
 
 image = Image.open("car.jpg")
 transform = transforms.Compose([
