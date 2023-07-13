@@ -1,0 +1,71 @@
+<h1>Furcifer Dashboard</h1>
+
+<h3>Local</h3>
+<button id="local_start">Start</button>
+<button id="local_stop">Stop</button>
+<button id="local_release">Release camera</button>
+<hr>
+<h3>Edge</h3>
+<button id="edge_start">Start</button>
+<button id="edge_stop">Stop</button>
+<button id="edge_release">Release camera</button>
+<hr>
+<h3>Split</h3>
+<button id="split_start">Start</button>
+<button id="split_stop">Stop</button>
+<button id="split_release">Release camera</button>
+<hr>
+<script type="text/javascript">
+    document.getElementById("local_start").addEventListener("click", function() {
+        sendData("5000", "start");
+    });
+    document.getElementById("local_stop").addEventListener("click", function() {
+        sendData("5000", "stop");
+    });
+    document.getElementById("local_release").addEventListener("click", function() {
+        sendData("5000", "release");
+    });
+
+    document.getElementById("edge_start").addEventListener("click", function() {
+        sendData("5001", "start");
+    });
+    document.getElementById("edge_stop").addEventListener("click", function() {
+        sendData("5001", "stop");
+    });
+    document.getElementById("edge_release").addEventListener("click", function() {
+        sendData("5001", "release");
+    });
+
+    document.getElementById("split_start").addEventListener("click", function() {
+        sendData("5002", "start");
+    });
+    document.getElementById("split_stop").addEventListener("click", function() {
+        sendData("5002", "stop");
+    });
+    document.getElementById("split_release").addEventListener("click", function() {
+        sendData("5002", "release");
+    });
+
+    function sendData(port, cmd) {
+    // Create an object with the data to send
+    const data = {};
+
+    // Send a POST request to the server
+    fetch("http://128.195.55.244:" + port + "/" + cmd, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+    })
+        // .then(response => response.json())
+        .then(result => {
+            // Handle the response from the server
+            console.log(result);
+        })
+        .catch(error => {
+            // Handle any errors that occur during the request
+            console.error("Error:", error);
+        });
+    }
+</script>

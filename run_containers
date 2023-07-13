@@ -1,0 +1,8 @@
+yolov5
+sudo docker run --rm -it --network host --runtime=nvidia --gpus all -v /home/jetson/Documents/Furcifer_demo/local_yolov5:/yolov5 --device /dev/video0 --workdir /yolov5 --entrypoint /usr/bin/python3  furcifer_base_ml:latest app.py -p=5000
+
+full edge
+sudo docker run --rm -it --network host --runtime=nvidia --gpus all -v /home/jetson/Documents/Furcifer_demo/full_edge:/full_edge --device /dev/video0 --workdir /full_edge --entrypoint /usr/bin/python3  furcifer_base:latest app.py -p=5001 -eu=http://128.195.55.248:3000/predict
+
+split
+sudo docker run --rm -it --network host --runtime=nvidia --gpus all -v /home/jetson/Documents/Furcifer_demo/split:/split --device /dev/video0 --workdir /split --entrypoint /usr/bin/python3  furcifer_base_ml:latest app.py -p=5002 -eu=http://128.195.55.248:3001/predict
